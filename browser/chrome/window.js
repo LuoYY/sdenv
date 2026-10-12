@@ -87,7 +87,7 @@ module.exports = (sdenv) => {
         do {
           // 最少执行两次，如果内置存在timeout对象，并且有未执行的延迟为0的，则等待执行
           await sdenv.tools.delay(0);
-        } while (window.sdenv.memory.timeout?.index.filter(it => it.time === 0 && it.flag === 0).length || --mintime > 0);
+        } while (sdenv.memory.timeout?.index.filter(it => it.time === 0 && it.flag === 0).length || --mintime > 0);
       }
       callback(...params)
     });

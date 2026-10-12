@@ -13,6 +13,8 @@ module.exports = (sdenv) => {
   require('./RTCPeerConnection')(sdenv);
   require('./document-element')(sdenv);
   require('./CanvasRenderingContext2D')(sdenv);
+  // require('./HTMLCanvasElement')(sdenv);
+  require('./fingerprint')(sdenv);
   require('./matchMedia')(sdenv);
   require('./Request')(sdenv);
   require('./console')(sdenv);
