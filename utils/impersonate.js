@@ -22,13 +22,13 @@ function buildArgs(url, { headers = {}, proxy, method = 'GET', body, mode = 'nav
   if (proxy) args.push('-x', proxy);
   if (method !== 'GET') args.push('-X', method);
   if (body) args.push('--data-binary', body);
-  // navigate: FP.headers 导航默认头; sub: FP.subHeaders 子资源身份头(sec-fetch-* 由调用方注入)
-  const base = mode === 'sub' ? FP.subHeaders : FP.headers;
+  // navigate: FP.headers 导航默认头; sub: FP.subHeaders 子资源身份头; minimal: 无默认头(对齐裸fetch基线, 仅调用方传入的头)
+  const base = mode === 'sub' ? FP.subHeaders : mode === 'minimal' ? {} : FP.headers;
   const merged = { ...base, ...headers };
   for (const [k, v] of Object.entries(merged)) args.push('-H', `${k}: ${v}`);
-  // sub 模式: 清除 --impersonate 预置的导航专用头(同名 -H 是覆盖, 未覆盖的需 -H 'name:' 删除)
-  if (mode === 'sub') {
-    for (const k of ['upgrade-insecure-requests', 'sec-fetch-user', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site']) {
+  // 非 navigate 模式: 清除 --impersonate 预置的浏览器默认头(同名 -H 是覆盖, 未覆盖的需 -H 'name:' 删除)
+  if (mode !== 'navigate') {
+    for (const k of new Set([...Object.keys(FP.headers), ...Object.keys(FP.subHeaders), 'sec-fetch-user', 'upgrade-insecure-requests'])) {
       if (!(k in merged)) args.push('-H', `${k}:`);
     }
   }
