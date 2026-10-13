@@ -31,13 +31,13 @@ module.exports = (sdenv) => {
       };
     }
     get userAgent() {
-      return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+      return require('./fingerprint').FP.ua
     }
     get appVersion() {
-      return '5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+      return require('./fingerprint').FP.ua.replace('Mozilla/', '')
     }
     get platform() {
-      return 'MacIntel';
+      return require('./fingerprint').FP.platform;
     }
     get vendor() {
       return "Google Inc.";
