@@ -6,7 +6,8 @@ try{require('module-alias')(require('../../utils/paths').basePath)}catch(err){};
 const { jsdomFromUrl, logger } = require('sdenv');
 
 const url = 'https://pmos.jibei.sgcc.com.cn';
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const { FP } = require('../../browser/chrome/fingerprint');
+const UA = FP.ua;
 const INTERNAL_KEYS = [
   '_commonForOrigin', '_currentEvent', '_currentOriginData', '_document', '_eventHandlers',
   '_frameElement', '_getEventHandlerFor', '_getEventHandlerTarget', '_globalEventChanged', '_globalProxy',

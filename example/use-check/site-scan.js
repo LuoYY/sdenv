@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // 9 瑞数站全貌扫描: HTTP指纹 + TLS证书 + RS结构 + SLB识别
 const { execSync } = require('child_process');
+const { FP } = require('../../browser/chrome/fingerprint');
 const sites = [
   { name: '新疆', url: 'https://pmos.xj.sgcc.com.cn:20080/' },
   { name: '福建', url: 'https://pmos.fj.sgcc.com.cn' },
@@ -12,7 +13,7 @@ const sites = [
   { name: '安徽', url: 'https://pmos.ah.sgcc.com.cn:20080' },
   { name: '宁夏', url: 'https://pmos.nx.sgcc.com.cn:10443' },
 ];
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const UA = FP.ua;
 const { ProxyAgent } = require('undici');
 
 async function scanSite(s, proxy) {

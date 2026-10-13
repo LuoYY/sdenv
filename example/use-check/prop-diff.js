@@ -10,7 +10,8 @@ const url = process.argv[2];
 const outFile = process.argv[3] || '/tmp/props.log';
 if (!url) throw new Error('用法: node prop-diff.js <url> <输出文件>');
 
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const { FP } = require('../../browser/chrome/fingerprint');
+const UA = FP.ua;
 const t0 = Date.now();
 const access = [];   // 按序记录
 let dumping = false;

@@ -6,7 +6,8 @@ try{require('module-alias')(require('../../utils/paths').basePath)}catch(err){};
 const { jsdomFromUrl, logger } = require('sdenv');
 
 const url = process.argv[2] || 'https://pmos.jibei.sgcc.com.cn';
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const { FP } = require('../../browser/chrome/fingerprint');
+const UA = FP.ua;
 const t0 = Date.now();
 const ts = () => `${((Date.now() - t0) / 1000).toFixed(0)}s`;
 

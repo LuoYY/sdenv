@@ -7,7 +7,8 @@ const { jsdomFromUrl, logger } = require('sdenv');
 
 const url = process.argv[2];
 if (!url) throw new Error('用法: node sweep-probe2.js <url>');
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const { FP } = require('../../browser/chrome/fingerprint');
+const UA = FP.ua;
 const t0 = Date.now();
 const ts = () => `${((Date.now() - t0) / 1000).toFixed(1)}s`;
 

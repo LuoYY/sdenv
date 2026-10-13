@@ -5,8 +5,9 @@ process.env.OPENSSL_LEGACY_RENEGOTIATION = '1';
 const { ProxyAgent } = require('undici');
 try{require('module-alias')(require('../../utils/paths').basePath)}catch(err){};
 const { jsdomFromUrl, jsdomFromText, logger } = require('sdenv');
+const { FP } = require('../../browser/chrome/fingerprint');
 const header = {
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  userAgent: FP.ua,
   proxy: process.env.proxy,
 }
 
