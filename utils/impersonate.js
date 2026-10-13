@@ -16,8 +16,9 @@ const { FP } = require('../browser/chrome/fingerprint');
 
 const CURL_BIN = process.env.CURL_IMPERSONATE || 'curl_chrome142';
 
-function buildArgs(url, { headers = {}, proxy, method = 'GET', body, mode = 'navigate' } = {}) {
-  const args = ['-s', '--max-time', '30', '-L', '--compressed'];
+function buildArgs(url, { headers = {}, proxy, method = 'GET', body, mode = 'navigate', insecure = false, timeout = 30 } = {}) {
+  const args = ['-s', '-S', '--max-time', String(timeout), '-L', '--compressed'];
+  if (insecure) args.push('-k');
   if (proxy) args.push('-x', proxy);
   if (method !== 'GET') args.push('-X', method);
   if (body) args.push('--data-binary', body);
@@ -42,14 +43,18 @@ function request(url, opts = {}) {
     const bodyFile = path.join(dir, 'b.bin');
     // -w 依次输出末次状态码与最终URL(-L 跟随后的落点), 换行分隔
     const args = [...buildArgs(url, opts), '-D', headerFile, '-o', bodyFile, '-w', '%{response_code}\n%{url_effective}'];
-    execFile(CURL_BIN, args, { maxBuffer: 1024 * 1024, timeout: 35000 }, (err, stdout) => {
+    execFile(CURL_BIN, args, { maxBuffer: 1024 * 1024, timeout: ((opts.timeout || 30) + 5) * 1000 }, (err, stdout, stderr) => {
       const finish = (fn, val) => {
         try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {}
         fn(val);
       };
       const [statusLine, ...hrefLines] = String(stdout || '').split('\n');
       const status = parseInt((statusLine || '').trim(), 10) || 0;
-      if (err && !status) return finish(reject, err);
+      if (err && !status) {
+        // -S 时 curl 失败原因在 stderr(如 curl: (7) Failed to connect...)
+        err.curlErr = String(stderr || '').trim();
+        return finish(reject, err);
+      }
       try {
         const href = hrefLines.join('\n').trim() || url;
         const headerRaw = fs.existsSync(headerFile) ? fs.readFileSync(headerFile, 'utf8') : '';
