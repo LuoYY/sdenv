@@ -43,6 +43,7 @@ const ts = () => `${((Date.now() - t0) / 1000).toFixed(0)}s`;
       clearInterval(timer);
       logger.info(`[${ts()}] P cookie就绪`);
       const c = dom.cookieJar.getCookieStringSync(url);
+      c.split(/;\s*/).forEach(kv => { const [n, ...v] = kv.split('='); logger.info(`  cookie值 ${n} (长度${v.join('=').length}): ${v.join('=')}`); });
       impersonate.request(url, { headers: { cookie: c, 'sec-fetch-site': 'none' }, proxy: process.env.proxy }).then(r => {
         const isRs = (n) => !SLB_COOKIES.includes(n) && !/^(JSESSIONID|BIGip|Alteon)/i.test(n);
         const challenge = r.setCookies.some(s => isRs(s.split('=')[0]));
