@@ -76,9 +76,11 @@
 - impersonate CLI 拉四川首包正常（200 + 4 cookie + RS 挑战）✅（2026-10-12 早前实测）
 
 待验证（需目标站配合，注意节奏防拉黑）：
-1. `SDENV_IMPERSONATE=1 node example/use-check/sc-final.js <四川>` 全链路（jsdom 资源也走 Chrome TLS）
-2. 宁夏：新 IP + impersonate 出口，单次跑完 P cookie + 二次验证闭环（9 月至今未完成过服务端认可验证）
+1. ~~四川全链路~~ ✅ 2026-10-12 九站 A/B 归因测试（`test/tmp/rs8-loop.js`，SDENV_IMPERSONATE=1 全链路）：**8 站二次请求均 200**（全导航头 A 与最小头 B 均通过、无挑战重发）——整套 TLS/指纹/请求头改动未破坏 cookie；唯宁夏 400
+2. ~~宁夏闭环~~ ✅ 2026-10-12：P cookie 2-4s 生成（cookie 名已变 `3RKyaeh47p90P`），二次请求无挑战重发但状态 400，且 **A 全导航头/B 最小头均 400**——排除请求头因素，指向 cookie 内容（nx VMP 调 4 次 canvas getContext）或站点新部署的额外校验；后续：抓 400 body 分析、必要时启用 canvas 桩（RS 方案修改 4 预案）
 3. 压测节奏：同一 IP 对单站完整流程 ≤2 次/小时（从宁夏经验反推，未实测阈值）
+
+附带发现（2026-10-12）：**河南对本机直连 IP 已 TCP 黑洞**（单 GET 连接超时，代理出口 412 正常）——9 月攻坚遗留的 IP 级拉黑，cookie 网关部署时河南必须走代理。
 
 已知残留差异（低风险记录在案）：
 - plain HTTP 目标会带 `Upgrade: h2c`/`HTTP2-Settings` 头（curl h2 升级机制，真实 Chrome 不发）——9 站全为 HTTPS，h2 走 ALPN 不受影响

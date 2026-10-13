@@ -41,12 +41,12 @@ proxy="http://user:pass@ip:port" node example/use-check/verify-proxy.js
 | 新疆 pmos.xj.sgcc.com.cn:20080 | 1 | CyFIZHvBqps2P | |
 | 福建 pmos.fj.sgcc.com.cn | 1 | OsRHYuEzHQgBP | |
 | 湖北 newpmos.hb.sgcc.com.cn | 1 | TsU0fa3o3m18P | |
-| 河南 pmos.ha.sgcc.com.cn | 1 | nNp645dDHuIXP | |
+| 河南 pmos.ha.sgcc.com.cn | 1 | nNp645dDHuIXP | 2026-10 发现本机直连 IP 被 TCP 黑洞（9 月遗留），代理出口正常，网关部署需走代理 |
 | 陕西 pmos.sn.sgcc.com.cn | 1 | REg0WU8vqCaDP | |
 | 冀北 pmos.jibei.sgcc.com.cn | 1 | sC0HezowWBq0P | 首包 200 带 RS（非 412），首层多一个 `enable_xxx` cookie |
 | **四川 pmos.sc.sgcc.com.cn** | **2** | PLOb9dbGTCt1P + RP2kXhpV57gmT | 两层 VMP 串行（inline1→ext1→inline2→ext2），共用 `$_ts` 全局 |
 | 安徽 pmos.ah.sgcc.com.cn:20080 | 1 | aRzUAYpFuoMPP | 需代理访问 |
-| 宁夏 pmos.nx.sgcc.com.cn:10443 | 1 | 3RKyaeh47p9P | 需代理；当前 WAF 拦截所有代理段 |
+| 宁夏 pmos.nx.sgcc.com.cn:10443 | 1 | 3RKyaeh47p90P | 需代理；2026-10-12：TLS 出口后代理段恢复可用（130 代理扫测 0 个 403，45 通），cookie 名已变（原 3RKyaeh47p9P），闭环判据通过（无挑战重发）但二次请求 400（全导航头/最小头均 400，非请求头问题；疑 cookie 内容或新部署校验，待抓 400 body） |
 
 注意：瑞数 cookie 名（`xxxO`/`xxxP`）按站点固定，但若站点重新部署会变化——verify-all.js 报"超时(P cookie未生成)"时先 curl 首包确认 cookie 名，更新 rs-sites.json。
 
