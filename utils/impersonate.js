@@ -16,14 +16,21 @@ const { FP } = require('../browser/chrome/fingerprint');
 
 const CURL_BIN = process.env.CURL_IMPERSONATE || 'curl_chrome142';
 
-function buildArgs(url, { headers = {}, proxy, method = 'GET', body } = {}) {
+function buildArgs(url, { headers = {}, proxy, method = 'GET', body, mode = 'navigate' } = {}) {
   const args = ['-s', '--max-time', '30', '-L', '--compressed'];
   if (proxy) args.push('-x', proxy);
   if (method !== 'GET') args.push('-X', method);
   if (body) args.push('--data-binary', body);
-  // FP.headers 是导航场景默认头, 调用方可覆盖
-  const merged = { ...FP.headers, ...headers };
+  // navigate: FP.headers 导航默认头; sub: FP.subHeaders 子资源身份头(sec-fetch-* 由调用方注入)
+  const base = mode === 'sub' ? FP.subHeaders : FP.headers;
+  const merged = { ...base, ...headers };
   for (const [k, v] of Object.entries(merged)) args.push('-H', `${k}: ${v}`);
+  // sub 模式: 清除 --impersonate 预置的导航专用头(同名 -H 是覆盖, 未覆盖的需 -H 'name:' 删除)
+  if (mode === 'sub') {
+    for (const k of ['upgrade-insecure-requests', 'sec-fetch-user', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site']) {
+      if (!(k in merged)) args.push('-H', `${k}:`);
+    }
+  }
   args.push(url);
   return args;
 }

@@ -5,7 +5,8 @@
 
 try{require('module-alias')(require('../../utils/paths').basePath)}catch(err){};
 const { jsdomFromUrl, logger, simpleDecrypt } = require('sdenv');
-const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+const { FP } = require('../../browser/chrome/fingerprint');
+const userAgent = FP.ua;
 
 const baseUrl = simpleDecrypt("UU1NSUoDFhZDUVhWSVBXF0peWloXWlZUF1pX")
 

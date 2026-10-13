@@ -2,6 +2,7 @@
 
 > 2026-09 攻坚成果。上游 sdenv 已停维护，本方案为自研适配。
 > 目标：IoT 设备（无浏览器）通过 cookie 网关访问瑞数防护的国网电力交易平台。
+> 2026-10 增补 TLS/HTTP 出口层（curl-impersonate，指纹统一 Chrome 144/Win10），详见 [TLS-FINGERPRINT-PLAN.md](./TLS-FINGERPRINT-PLAN.md)。
 
 ## 一、结论总览
 
@@ -84,7 +85,9 @@ rs-alltool/
 
 ### 修改 3：sdenv/browser/chrome/fingerprint.js（新文件）指纹对齐
 
-用真实浏览器采集值覆盖：
+**2026-10-12 更新**：已重构为 Chrome 144 / Windows 10 单一来源——`FP` 数据对象（UA/sec-ch-ua/screen/window/导航头 `headers`/子资源头 `subHeaders`）+ 环境注入函数双导出，全仓脚本与 impersonate 出口统一引用，原 Mac 采集值废弃。
+
+原始版本（2026-09）用真实浏览器采集值覆盖：
 - `screen`：0x0 → 2056x1329（availHeight 1226, colorDepth/pixelDepth 30）
 - `navigator.languages`：en-US/en → zh-CN/zh-Hans-CN；`language`、`deviceMemory=32`、`hardwareConcurrency=18`、`pdfViewerEnabled=true`
 - `window`：devicePixelRatio=2、innerWidth/Height 723/1019、outerWidth/Height、screenX/Y
@@ -102,6 +105,12 @@ rs-alltool/
 - `dateAndRandomHandle.js`：`self._valueOf` 替代 `sdenv.memory.Date.prototype.valueOf`
 
 **改 sdenv-extend/src 后必须重建**：`cd sdenv-extend && npm run build`（主入口是 build/sdenv-extend-cjs.js）。
+
+### 修改 6：TLS/HTTP 出口（2026-10 增补）
+
+- 出口：`SDENV_IMPERSONATE=1` 时 jsdom 所有 http(s) 请求（含 fromURL 首包与外链 JS）经 curl-impersonate（`curl_chrome142` wrapper，Chrome TLS/h2 指纹），verify-all/verify-proxy 二次请求与 site-scan 探测同出口，Node 进程不再对目标站裸 TLS 出网
+- 请求头分流：导航用 `FP.headers`（Chrome144 完整导航头），子资源用 `FP.subHeaders` 并按 `element` 推断 `sec-fetch-dest/mode/site`；`--impersonate` 预置的导航专用头在子资源请求已用 `-H 'name:'` 清除
+- 本地回归：`test/tmp/imp-e2e.js`（127.0.0.1 零外网，15 项断言含请求头）；JA4 对比与残留差异记录见 [TLS-FINGERPRINT-PLAN.md](./TLS-FINGERPRINT-PLAN.md)
 
 ## 四、运行配置（攻克瑞数站的完整参数）
 
@@ -151,6 +160,7 @@ const dom = await jsdomFromUrl(url, {
 | 6 | jsdom 29 个 `_xxx` 内部属性 | 冀北/四川 | undefinedKeys 隐藏 |
 | 7 | screen/languages/deviceMemory 等指纹值 | 四川 | fingerprint.js |
 | 8 | canvas/WebGL 指纹 | 四川二层 | jsdom 无 canvas 的 null 行为可过；严格校验时启用 HTMLCanvasElement.js |
+| 9 | TLS/HTTP 层指纹（JA4 非 Chrome、HTTP/1.1）与 Chrome UA 矛盾 | 宁夏/河南（拉黑推断） | curl-impersonate 出口（修改 6） |
 
 定位方法论（可复用于新检测项）：
 - **属性访问 diff**：`example/use-check/prop-diff.js` 对比通过站/挂起站的 VMP window get 序列（冀北曾在 `Object` 上死循环 2467 次、第 18 步扫到 `sdenv`）

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// 9 瑞数站全貌扫描: HTTP指纹 + TLS证书 + RS结构 + SLB识别
+// 9 瑞数站全貌扫描: HTTP指纹 + TLS证书 + RS结构 + SLB识别(探测经curl-impersonate, Chrome TLS)
 const { execSync } = require('child_process');
-const { FP } = require('../../browser/chrome/fingerprint');
+const impersonate = require('../../utils/impersonate');
 const sites = [
   { name: '新疆', url: 'https://pmos.xj.sgcc.com.cn:20080/' },
   { name: '福建', url: 'https://pmos.fj.sgcc.com.cn' },
@@ -13,29 +13,22 @@ const sites = [
   { name: '安徽', url: 'https://pmos.ah.sgcc.com.cn:20080' },
   { name: '宁夏', url: 'https://pmos.nx.sgcc.com.cn:10443' },
 ];
-const UA = FP.ua;
-const { ProxyAgent } = require('undici');
 
 async function scanSite(s, proxy) {
   const row = { name: s.name, url: s.url };
   try {
-    const dispatcher = proxy ? new ProxyAgent(proxy) : undefined;
-    const res = await fetch(s.url, {
-      headers: { 'user-agent': UA },
-      dispatcher,
-      signal: AbortSignal.timeout(25000),
-    });
-    row.code = res.status;
-    row.server = res.headers.get('server') || '';
-    row.cookies = (res.headers.getSetCookie ? res.headers.getSetCookie() : []).map(c => c.split('=')[0]);
-    const text = await res.text();
+    const r = await impersonate.request(s.url, { proxy });
+    row.code = r.status;
+    row.server = r.headerMap['server'] || '';
+    row.cookies = r.setCookies.map(c => c.split('=')[0]);
+    const text = r.body.toString();
     row.rsLayers = (text.match(/\$_ts\.nsd/g) || []).length;
     row.rsScripts = [...text.matchAll(/src="(\/[A-Za-z0-9]+\/[A-Za-z0-9.]+\.js)"/g)].map(m => m[1]);
     row.title = (text.match(/<title>([^<]*)<\/title>/) || [])[1] || '';
     row.bodyKB = Math.round(text.length / 1024);
     row.slb = row.cookies.some(c => /persist|BIGip|Alteon|JSession/i.test(c)) ? 'SLB-cookie' : '';
   } catch (e) {
-    row.code = 'ERR:' + String(e.cause ? e.cause.code || e.cause.message : e.message).slice(0, 30);
+    row.code = 'ERR:' + String(e.message || e).slice(0, 30);
   }
   // TLS
   try {

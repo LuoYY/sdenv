@@ -8,6 +8,7 @@ try{require('module-alias')(require('../../utils/paths').basePath)}catch(err){};
 const { jsdomFromUrl, jsdomFromText, logger, simpleDecrypt, jsdom } = require('sdenv');
 
 const { ResourceLoader, agentFactory, Request } = jsdom;
+const { FP } = require('../../browser/chrome/fingerprint');
 const tarUrl = simpleDecrypt("UU1NSQMWFlxJTFsXWldQSVgXXlZPF1pXFn1BWxZwV11cQWl9aExcS0A=", 57)
 const pageData = (pageNum) => `searchCatalogInfo.Pubtype=1&searchCatalogInfo.Ggr_Begin=20251202&searchCatalogInfo.Ggr_End=&searchCatalogInfo.Pd_Begin=&searchCatalogInfo.Pd_End=&searchCatalogInfo.An=&searchCatalogInfo.Pn=&searchCatalogInfo.Ad_Begin=&searchCatalogInfo.Ad_End=&searchCatalogInfo.E71_73=&searchCatalogInfo.E72=&searchCatalogInfo.Edz=&searchCatalogInfo.E51=&searchCatalogInfo.Ti=&searchCatalogInfo.Abs=&searchCatalogInfo.Edl=&searchCatalogInfo.E74=&searchCatalogInfo.E30=&searchCatalogInfo.E66=&searchCatalogInfo.E62=&searchCatalogInfo.E83=&searchCatalogInfo.E85=&searchCatalogInfo.E86=&searchCatalogInfo.E87=&pageModel.pageNum=${pageNum}&pageModel.pageSize=3&sortFiled=ggr_desc&searchAfter=&showModel=1&isOr=False&__RequestVerificationToken=CfDJ8DmajzUhF49Oo6dsdTmCn0-wXMierHYJssQLm03PhA7X98Kob6GL4SaXMjM0obKy8xviA_OnObYwjuDwHQnQIVC33bywCUFA7pkaynRxICKTeRMlamkyYh-qxg0SNBY54-QyKZ8fUlcWCp5o0z69mFw`;
 
@@ -60,7 +61,7 @@ class ExampleLoader extends ResourceLoader {
 
 const resources = new ExampleLoader({
   strictSSL: false,
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  userAgent: FP.ua,
   // proxy: "http://127.0.0.1:8888",
 });
 

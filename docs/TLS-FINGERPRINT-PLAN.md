@@ -54,26 +54,35 @@
 
 | 文件 | 状态 | 内容 |
 |------|------|------|
-| `browser/chrome/fingerprint.js` | ✅ 已改 | 重构为单一来源：FP 数据对象 + 环境注入函数双导出；UA 144/Win、sec-ch-ua 头、Win 指纹全套 |
+| `browser/chrome/fingerprint.js` | ✅ 已改 | 重构为单一来源：FP 数据对象 + 环境注入函数双导出；UA 144/Win、sec-ch-ua 头、Win 指纹全套；新增 `FP.subHeaders`（子资源身份头基线） |
 | `browser/chrome/navigator.js` | ✅ 已改 | userAgent/appVersion/platform 改引 `FP`（消除 131/Mac 旧值） |
-| `utils/impersonate.js` | ✅ 新建 | curl-impersonate 封装：FP.headers 默认头、`--impersonate chrome142`、代理透传、Set-Cookie 解析、CLI 模式 |
-| `sdenv-jsdom/.../resource-loader.js` | ✅ 已改 | `SDENV_IMPERSONATE=1` 且 `global.__sdenvImpersonate` 存在时，jsdom 拉资源走 impersonate（含 cookie 进出） |
+| `utils/impersonate.js` | ✅ 新建 | curl-impersonate 封装：默认 `curl_chrome142`（wrapper 自带 `--compressed`/`--impersonate`，实测 Accept-Encoding 与 Chrome144 逐字一致）、`-L` 重定向、头/体临时文件无损拆分、body 为 Buffer、全跳次 Set-Cookie 收集、`href`/`headerMap` 返回、`mode: navigate/sub` 请求头分流（sub 模式用 `-H 'name:'` 清除预设导航头） |
+| `sdenv-jsdom/.../resource-loader.js` | ✅ 已改 | `SDENV_IMPERSONATE=1` 且 `global.__sdenvImpersonate` 存在时 jsdom 拉资源走 impersonate（含 cookie 进出）；补齐 fromURL 依赖的 `response`/`href`/`getHeader` 接口；导航/子资源分流——子资源按 `element` 推断 `sec-fetch-dest/mode/site`（site 按 referrer 同源启发式） |
 | `sdenv/index.js` | ✅ 已改 | SDENV_IMPERSONATE=1 时挂 `global.__sdenvImpersonate` |
-| `example/use-check/sc-final.js` | ✅ 已改 | UA 引 FP；二次验证走 impersonate；SLB cookie 判定白名单 |
-| `example/use-check/*.js` 其余 | ⬜ 待改 | verify-all/verify-proxy/site-scan 同步换 FP + impersonate |
-| `docs/RS-BYPASS-SOLUTION.md` | ⬜ 待更新 | 指纹小节补充 TLS 层 |
+| `example/use-check/*.js` 全部 | ✅ 已改 | 14 脚本 UA 切 `FP.ua`；verify-all/verify-proxy 二次请求、site-scan 探测全走 impersonate（零裸 TLS） |
+| `example/use-remote/{passive,active}.js` | ✅ 已改 | 示例 UA 切 `FP.ua` |
+| `test/tmp/imp-e2e.js` | ✅ 新建 | 本地回归（127.0.0.1 零外网）：重定向/gzip/多跳 Set-Cookie/Buffer/fromURL 接口/导航与子资源请求头，15 项断言 |
+| `docs/RS-BYPASS-SOLUTION.md` | ✅ 已更新 | 指纹小节补充 TLS 层与 Chrome144 单一来源 |
 
 ## 五、验证结果与待办
 
-已验证：
-- chrome142 JA4 = 真实 Chrome 前两段 ✅（tls.peet.ws 实测）
+已验证（均零外网，本地 localhost）：
+- chrome142 JA4 = 真实 Chrome 前两段 ✅（tls.peet.ws 实测；注意 JA4 第三段确定性，116≠142，故默认 chrome142）
 - navigator/UA/头三层同源 144 ✅（单测）
-- impersonate CLI 拉四川首包正常（200 + 4 cookie + RS 挑战）✅
+- wrapper `--compressed` 自动发送 `Accept-Encoding: gzip, deflate, br, zstd` 与 Chrome144 逐字一致，gzip/br 自动解压 ✅
+- 导航请求头全套（dest=document/mode=navigate/user=?1/uir=1/accept 完整版）✅
+- 子资源请求头（dest=script/mode=no-cors/site=same-origin、accept=\*/\*、referer、无导航专用头）✅，`--impersonate` 预置导航头已清除 ✅
+- jsdom 全链路（302→gzip 主文档、script 子资源、三枚 cookie 入 jar、重定向后 URL）✅（`test/tmp/imp-e2e.js`）
+- impersonate CLI 拉四川首包正常（200 + 4 cookie + RS 挑战）✅（2026-10-12 早前实测）
 
 待验证（需目标站配合，注意节奏防拉黑）：
 1. `SDENV_IMPERSONATE=1 node example/use-check/sc-final.js <四川>` 全链路（jsdom 资源也走 Chrome TLS）
 2. 宁夏：新 IP + impersonate 出口，单次跑完 P cookie + 二次验证闭环（9 月至今未完成过服务端认可验证）
 3. 压测节奏：同一 IP 对单站完整流程 ≤2 次/小时（从宁夏经验反推，未实测阈值）
+
+已知残留差异（低风险记录在案）：
+- plain HTTP 目标会带 `Upgrade: h2c`/`HTTP2-Settings` 头（curl h2 升级机制，真实 Chrome 不发）——9 站全为 HTTPS，h2 走 ALPN 不受影响
+- jsdom 的 XHR（living/xhr）不经 ResourceLoader，页面内 XHR 仍走 Node TLS——当前 9 站 cookie 生成链路不涉及，若后续站点需要 XHR 出网需另行接管
 
 ## 六、后续演进：Go utls 网关
 

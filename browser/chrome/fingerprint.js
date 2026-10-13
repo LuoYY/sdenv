@@ -32,6 +32,16 @@ const FP = {
     'sec-fetch-user': '?1',
     'upgrade-insecure-requests': '1',
   },
+  // 子资源(script/style/img)默认头: 导航专用头(sec-fetch-dest: document、sec-fetch-user、
+  // upgrade-insecure-requests)不适用; sec-fetch-dest/mode/site 由 ResourceLoader 补丁
+  // 按请求的 element 与 referrer 推断注入, accept-encoding 由 curl --compressed 自带
+  subHeaders: {
+    'accept': '*/*',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'sec-ch-ua': '"Chromium";v="144", "Google Chrome";v="144", "Not?A_Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+  },
 };
 
 module.exports = (sdenv) => {
